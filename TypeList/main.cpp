@@ -82,13 +82,14 @@ template <typename T, unsigned int index, typename E> struct ChangeType;
 
 template <typename Head, typename Elem, typename ... Tail>
 struct ChangeType<TypeList<Head, Tail ...>, 0, Elem> {
-  using result = AddType<TypeList<Tail ...>, 0, Elem>::result;
+  using result = typename AddType<TypeList<Tail ...>, 0, Elem>::result;
 };
 
 template <typename Head, typename Elem, unsigned int index, typename ... Tail>
 struct ChangeType<TypeList<Head, Tail ...>, index, Elem> {
   using result = typename AddType<typename ChangeType<TypeList<Tail ...>, index - 1, Elem>::result, 0, Head>::result;
 };
+
 
 typedef TypeList<int, double, std::string> TL;
 
