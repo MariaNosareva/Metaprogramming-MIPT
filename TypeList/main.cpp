@@ -1,4 +1,5 @@
 #include <iostream>
+#include <typeinfo>
 
 /* --------------------------------------------------- TYPELIST -----------------------------------------------------*/
 
@@ -15,6 +16,19 @@ struct TypeList<T> {
   using head = T;
   using tail = NullClass;
 };
+
+/* --------------------------------------------------- PRINT --------------------------------------------------------*/
+
+template <typename TL>
+void printTL() {
+  std::cout << typeid(typename TL::head).name() << " ";
+  printTL<typename TL::tail>();
+};
+
+template <>
+void printTL<NullClass>() {
+  return;
+}
 
 /* --------------------------------------------------- LENGTH -------------------------------------------------------*/
 
@@ -90,10 +104,31 @@ struct ChangeType<TypeList<Head, Tail ...>, index, Elem> {
   using result = typename AddType<typename ChangeType<TypeList<Tail ...>, index - 1, Elem>::result, 0, Head>::result;
 };
 
+/* --------------------------------------- GENERATING SCATTER HIERARHY ----------------------------------------------*/
 
-typedef TypeList<int, double, std::string> TL;
+template <typename T>
+struct Unit {
+  T value;
+};
+
+template <typename TL, template <typename> typename U>  struct GSH;
+
+template <typename Head, template <typename> typename U, typename ... Tail>
+struct GSH<TypeList<Head, Tail ...>, U>: public U<Head>,
+            public GSH<TypeList<Tail ...>, U> {
+  using TL = TypeList<Head, Tail ...>;
+  using RightTree = U<Head>;
+  using LeftTree = GSH<TypeList<Tail ...>, U>;
+};
+
+template <template <typename> typename U>
+struct GSH<TypeList<>, U> {  };
+
+
+typedef TypeList<int, int, float, double, std::string> TL;
 
 int main() {
-  TypeAt<ChangeType<TL, 1, int>::result, 1>::result a = 3.5;
+  GSH<TL, Unit> scatterHierarchy;
+  printTL<TL>();
   return 0;
 }
