@@ -90,7 +90,7 @@ struct RemoveType<TypeList<Head, Tail ... >, index> {
   using result = typename AddType<typename RemoveType<TypeList<Tail ...>, index - 1>::result, 0, Head>::result;
 };
 
-/* --------------------------------------------------- CHANGE -------------------------------------------------------*/
+/* -------------------------------------------------- CHANGE --------------------------------------------------------*/
 
 template <typename T, unsigned int index, typename E> struct ChangeType;
 
@@ -104,9 +104,25 @@ struct ChangeType<TypeList<Head, Tail ...>, index, Elem> {
   using result = typename AddType<typename ChangeType<TypeList<Tail ...>, index - 1, Elem>::result, 0, Head>::result;
 };
 
+/* ------------------------------------------- GET FIRST N ELEMENTS  ------------------------------------------------*/
+
+template <typename TL, unsigned int HowMany> struct CutFirstN;
+
+template <typename TL, unsigned int HowMany>
+struct CutFirstN {
+  using result = typename AddType<typename CutFirstN<TL, HowMany - 1>::result,
+                                  HowMany - 1,
+                                  typename TypeAt<TL, HowMany - 1>::result>::result;
+};
+
+template <typename TL>
+struct CutFirstN<TL, 0> {
+  using result = TypeList<>;
+};
+
 /* --------------------------------------- GENERATING SCATTER HIERARHY ----------------------------------------------*/
 
-template <typename T>
+template <class T>
 struct Unit {
   T value;
 };
@@ -124,11 +140,56 @@ struct GSH<TypeList<Head, Tail ...>, U>: public U<Head>,
 template <template <typename> typename U>
 struct GSH<TypeList<>, U> {  };
 
+/* --------------------------------------- GENERATING LINEAR HIERARHY -----------------------------------------------*/
 
-typedef TypeList<int, int, float, double, std::string> TL;
+template <class T, class Base>
+struct LinearUnit: Base {
+  T value;
+};
+
+template <typename TL, template <class, class> typename U, class Root = NullClass>  struct GLH;
+
+template <typename Head, template <class, class> typename U, class Root, typename ... Tail>
+struct GLH<TypeList<Head, Tail ...>, U, Root>: public U<Head, GLH<TypeList<Tail ...>, U, Root>> {};
+
+template <typename Tail, template <class, class> typename U, class Root>
+struct GLH<TypeList<Tail>, U, Root>: public LinearUnit<Tail, Root> {};
+
+/* --------------------------------------- GENERATING FIBONACCI NUMBERS ---------------------------------------------*/
+
+template <int T>
+struct Fibonacci
+{
+  enum { value = Fibonacci<T - 1>::value + Fibonacci<T - 2>::value };
+};
+
+template <>
+struct Fibonacci<1>
+{
+  enum { value = 1 };
+};
+
+template <>
+struct Fibonacci<2>
+{
+  enum { value = 1 };
+};
+
+/*-------------------------------------------------------------------------------------------------------------------*/
+
+class First {
+ public:
+  std::string fisrtString = "hello";
+  std::string getFirstString() const {
+    return fisrtString;
+  }
+};
+
+typedef TypeList<First, std::string, First> TL;
+typedef GSH<TL, Unit> SH;
+typedef GLH<TL, LinearUnit> LH;
+// typedef CutFirstN<TL, 2>::result CuttedTL;
 
 int main() {
-  GSH<TL, Unit> scatterHierarchy;
-  printTL<TL>();
   return 0;
 }
