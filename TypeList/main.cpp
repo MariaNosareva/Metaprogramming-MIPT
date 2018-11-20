@@ -153,7 +153,7 @@ template <typename Head, template <class, class> typename U, class Root, typenam
 struct GLH<TypeList<Head, Tail ...>, U, Root>: public U<Head, GLH<TypeList<Tail ...>, U, Root>> {};
 
 template <typename Tail, template <class, class> typename U, class Root>
-struct GLH<TypeList<Tail>, U, Root>: public LinearUnit<Tail, Root> {};
+struct GLH<TypeList<Tail>, U, Root>: public U<Tail, Root> {};
 
 /* --------------------------------------- GENERATING FIBONACCI NUMBERS ---------------------------------------------*/
 
