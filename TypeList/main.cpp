@@ -241,7 +241,7 @@ class First {
 typedef TypeList<First, std::string, First> TL;
 typedef GSH<TL, Unit> SH;
 typedef GLH<TL, LinearUnit> LH;
-// typedef CutFirstN<TL, 2>::result CuttedTL;
+typedef GFH<TL, LinearUnit> FH;
 
 int main() {
   return 0;
