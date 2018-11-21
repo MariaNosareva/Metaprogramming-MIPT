@@ -104,20 +104,58 @@ struct ChangeType<TypeList<Head, Tail ...>, index, Elem> {
   using result = typename AddType<typename ChangeType<TypeList<Tail ...>, index - 1, Elem>::result, 0, Head>::result;
 };
 
+/* ------------------------------------------------- TERNARY --------------------------------------------------------*/
+
+template<bool B, typename F, typename S> struct Ternary;
+
+template<typename F, typename S>
+struct Ternary<true, F, S> {
+  using result = F;
+};
+
+template<typename F, typename S>
+struct Ternary<false, F, S> {
+  using result = S;
+};
+
 /* ------------------------------------------- GET FIRST N ELEMENTS  ------------------------------------------------*/
 
 template <typename TL, unsigned int HowMany> struct CutFirstN;
 
 template <typename TL, unsigned int HowMany>
 struct CutFirstN {
-  using result = typename AddType<typename CutFirstN<TL, HowMany - 1>::result,
-                                  HowMany - 1,
-                                  typename TypeAt<TL, HowMany - 1>::result>::result;
+  using result = typename Ternary<Length<TL>::value <= HowMany,
+                                  TL,
+                                  typename AddType<typename CutFirstN<TL, HowMany - 1>::result,
+                                                   HowMany - 1,
+                                                   typename TypeAt<TL, HowMany - 1>::result>
+                                  ::result>
+                          ::result;
+
 };
 
 template <typename TL>
 struct CutFirstN<TL, 0> {
   using result = TypeList<>;
+};
+
+/* ----------------------------------------- REMOVE FIRST N ELEMENTS  -----------------------------------------------*/
+
+template <typename TL, unsigned int HowMany> struct RemoveFirstN;
+
+template <typename TL, unsigned int HowMany>
+struct RemoveFirstN {
+  using result = typename Ternary<Length<TL>::value <= HowMany,
+                         TypeList<>,
+                         typename RemoveFirstN<typename RemoveType<TL, 0>::result,
+                                               HowMany - 1>
+                         ::result>
+                  ::result;
+};
+
+template <typename TL>
+struct RemoveFirstN<TL, 0> {
+  using result = TL;
 };
 
 /* --------------------------------------- GENERATING SCATTER HIERARHY ----------------------------------------------*/
@@ -171,6 +209,24 @@ template <>
 struct Fibonacci<2> {
   enum { value = 1 };
 };
+
+/* --------------------------------------- GENERATING FIBONACCI HIERARHY --------------------------------------------*/
+
+template <typename TL, template <typename, typename> typename LU, unsigned int index> struct FibHelper;
+
+template <typename TL, template <typename, typename> typename LU, unsigned int index>
+struct FibHelper: public GLH<typename CutFirstN<TL, Fibonacci<index>::value>::result, LU>,
+                  public FibHelper<typename RemoveFirstN<TL, Fibonacci<index>::value>::result,
+                                   LU,
+                                   index + Fibonacci<index>::value> {  };
+
+template <template <typename, typename> typename LU, unsigned int index>
+struct FibHelper<TypeList<>, LU, index> {  };
+
+template <typename TL, template <typename, typename> typename LU>  struct GFH;
+
+template <typename TL, template <typename, typename> typename LU>
+struct GFH: public FibHelper<TL, LU, 0> {};
 
 /*-------------------------------------------------------------------------------------------------------------------*/
 
